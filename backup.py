@@ -3,20 +3,39 @@ from streamlit_drawable_canvas import st_canvas
 import numpy as np
 import json
 
+st.set_page_config(
+    page_title="PAInt App",
+    page_icon="🔞",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+st.title("PAInt App")
+
 # サイドバーでパラメータを指定
 stroke_width = st.sidebar.slider("Stroke width: ", 1, 25, 3)
 stroke_color = st.sidebar.color_picker("Stroke color hex: ", "#000000")
 bg_color = st.sidebar.color_picker("Background color hex: ", "#FFFFFF")
 
-# JSONデータの読み込み
-with open("shape_data.json") as f:
-    shape_data = json.load(f)
+# JSONデータの読み込み（キャッシュを利用）
+@st.cache_data
+def load_shape_data():
+    with open("shape_data.json") as f:
+        return json.load(f)
+
+shape_data = load_shape_data()  # キャッシュされたJSONデータを取得
 
 # セッションステートの初期化
 if "objects" not in st.session_state:
     st.session_state["objects"] = []  # 描画オブジェクトを保持する
 if "rerun" not in st.session_state:
     st.session_state["rerun"] = False  # リラン管理用
+
+# クリアボタンを追加
+if st.sidebar.button("Clear Canvas"):
+    st.session_state["objects"] = []  # 描画オブジェクトをクリア
+    st.session_state["rerun"] = True  # リランをトリガー
+    st.rerun()
 
 # 2つの点の間の角度を計算
 def calculate_angle(start_point, end_point):
@@ -95,8 +114,8 @@ canvas_result = st_canvas(
     stroke_color=stroke_color,
     background_color=bg_color,
     update_streamlit=True,
-    height=400,
-    width=600,
+    height=800,
+    width=1200,
     drawing_mode="freedraw",
     key="canvas", 
     initial_drawing={"objects": st.session_state["objects"]} if st.session_state["objects"] else None  # セッションステートのオブジェクトを反映
